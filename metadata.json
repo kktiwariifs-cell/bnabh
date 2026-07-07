@@ -1,0 +1,6 @@
+{
+  "name": "NABH Compliance & ABDM HMS",
+  "description": "Unified National Healthcare Gateways, ABDM Milestones (M1-M4), and comprehensive NABH Compliance modules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
