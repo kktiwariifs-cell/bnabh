@@ -19,6 +19,7 @@ import NabhModulesList from './NabhModulesList';
 import NabhDashboardWidget from './NabhDashboardWidget';
 import IntegrationsFeaturesWidget from './IntegrationsFeaturesWidget';
 import FooterWidget from './FooterWidget';
+import AlliedOperationalPanels from './AlliedOperationalPanels';
 
 interface PanelWorkspaceProps {
   activePanel: string;
@@ -414,6 +415,79 @@ export default function PanelWorkspace({
     { token: 'TKN-001', name: 'Alok Ranjan', phone: '9812345670', type: 'OPD Registration', checkin: '10:30 AM' },
     { token: 'TKN-002', name: 'Meera Deshmukh', phone: '9432109876', type: 'Specialist Inquiry', checkin: '10:45 AM' }
   ]);
+  const [activePrintSlip, setActivePrintSlip] = useState<any>(null); // State for displaying a thermal print slip
+
+  // Nursing Panel Active Sub-tab
+  const [nursingTab, setNursingTab] = useState<'mar' | 'isbar' | 'vitals' | 'care_checklist'>('mar');
+
+  // MAR (Medication Administration Record) States
+  const [marQueue, setMarQueue] = useState([
+    { id: 'MAR-01', patient: 'Rahul Kumar', med: 'Amlodipine 5mg', dosage: '1 Tablet QD', time: '10:00 AM', status: 'Pending', nurseSign: '' },
+    { id: 'MAR-02', patient: 'Karan Singh', med: 'Insulin Glargine', dosage: '10 Units SC', time: '01:00 PM', status: 'Pending Dual-Signoff', nurseSign: '' },
+    { id: 'MAR-03', patient: 'Priya Patel', med: 'Ceftriaxone 1g IV', dosage: 'Slow Infusion', time: '04:00 PM', status: 'Pending', nurseSign: '' }
+  ]);
+  const [newMarPatient, setNewMarPatient] = useState('Rahul Kumar');
+  const [newMarMed, setNewMarMed] = useState('');
+  const [newMarDosage, setNewMarDosage] = useState('1 Tablet QD');
+  const [newMarTime, setNewMarTime] = useState('12:00 PM');
+  const [newMarDualVerify, setNewMarDualVerify] = useState(false);
+
+  // ISBAR Handovers
+  const [isbarHandovers, setIsbarHandovers] = useState([
+    {
+      id: 'SBAR-001',
+      patient: 'Rahul Kumar',
+      situation: 'CABG recovery post-op stable but BP slightly elevated.',
+      background: '72-year-old male, HTN history. Underwent triple bypass yesterday.',
+      assessment: 'SpO2 98% on 2L O2, HR 82 bpm, BP 142/90 mmHg. Pain 3/10 under control.',
+      recommendation: 'Check vitals hourly. Maintain urine output chart. Hold BP meds if SBP < 100.',
+      fromNurse: 'Nurse Preeti',
+      toNurse: 'Nurse Sunita',
+      timestamp: '19-Jul-2026 08:00 AM'
+    },
+    {
+      id: 'SBAR-002',
+      patient: 'Karan Singh',
+      situation: 'Admitted with acute diabetic ketoacidosis (DKA), on insulin infusion.',
+      background: '45-year-old male, Type 1 Diabetes, skipped doses due to fever.',
+      assessment: 'Blood glucose level 280 mg/dL (down from 450), pH 7.25, alert & oriented.',
+      recommendation: 'Check capillary blood glucose (CBG) Q2H, adjust insulin pump as per protocol.',
+      fromNurse: 'Nurse James',
+      toNurse: 'Nurse Preeti',
+      timestamp: '19-Jul-2026 08:30 AM'
+    }
+  ]);
+  const [newIsbarPatient, setNewIsbarPatient] = useState('Rahul Kumar');
+  const [newIsbarSituation, setNewIsbarSituation] = useState('');
+  const [newIsbarBackground, setNewIsbarBackground] = useState('');
+  const [newIsbarAssessment, setNewIsbarAssessment] = useState('');
+  const [newIsbarRecommendation, setNewIsbarRecommendation] = useState('');
+  const [newIsbarFrom, setNewIsbarFrom] = useState('Nurse Sunita');
+  const [newIsbarTo, setNewIsbarTo] = useState('Nurse Anil');
+
+  // Vitals logs
+  const [vitalsLogs, setVitalsLogs] = useState([
+    { id: 'VIT-01', patient: 'Rahul Kumar', bp: '135/85', hr: 80, temp: '98.6°F', spo2: 98, resp: 18, timestamp: '08:00 AM' },
+    { id: 'VIT-02', patient: 'Karan Singh', bp: '128/80', hr: 94, temp: '99.1°F', spo2: 95, resp: 20, timestamp: '08:30 AM' }
+  ]);
+  const [newVitalPatient, setNewVitalPatient] = useState('Rahul Kumar');
+  const [newVitalBP, setNewVitalBP] = useState('120/80');
+  const [newVitalHR, setNewVitalHR] = useState('72');
+  const [newVitalTemp, setNewVitalTemp] = useState('98.4');
+  const [newVitalSpO2, setNewVitalSpO2] = useState('98');
+  const [newVitalResp, setNewVitalResp] = useState('16');
+
+  // Safety checklist states
+  const [safetyChecklist, setSafetyChecklist] = useState({
+    narcoticRegister: true,
+    highAlertMeds: true,
+    codeBlueChecked: true,
+    criticalTelemetry: false,
+    catheterCareDone: true,
+    cannulaSiteChecked: true,
+    bradenScoreLogged: false,
+    dvtProphylaxisGiven: true
+  });
 
   // ICU States
   const [icuAlertLimit, setIcuAlertLimit] = useState(130); 
@@ -1514,14 +1588,15 @@ export default function PanelWorkspace({
                 e.preventDefault();
                 if (!visitorName) return;
                 const tokenNo = `TKN-00${visitorQueue.length + 1}`;
-                setVisitorQueue([...visitorQueue, {
+                const newSlip = {
                   token: tokenNo,
                   name: visitorName,
                   phone: visitorPhone || '99999-88888',
                   type: visitorType,
                   checkin: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                }]);
-                alert(`🎟️ Token Issued: ${tokenNo} for ${visitorName}. Please guide them to the respective waiting lounge.`);
+                };
+                setVisitorQueue([...visitorQueue, newSlip]);
+                setActivePrintSlip(newSlip); // Automatically open the printable slip modal
                 setVisitorName('');
                 setVisitorPhone('');
               }} className="space-y-2.5">
@@ -1536,10 +1611,10 @@ export default function PanelWorkspace({
                 <div>
                   <label className="block text-[10px] text-slate-500 font-bold mb-0.5">Check-in Category</label>
                   <select value={visitorType} onChange={e => setVisitorType(e.target.value)} className="w-full p-2 border rounded bg-white">
-                    <option value="OPD Registration">OPD New Registration</option>
-                    <option value="Specialist Inquiry">Consultation Chamber Token</option>
-                    <option value="Visiting Patient">General IPD Visitor Slip</option>
-                    <option value="Emergency Inquiry">ER Emergency Triage Info</option>
+                    <option value="OPD New Registration">OPD New Registration</option>
+                    <option value="Consultation Chamber Token">Consultation Chamber Token</option>
+                    <option value="General IPD Visitor Slip">General IPD Visitor Slip</option>
+                    <option value="ER Emergency Triage Info">ER Emergency Triage Info</option>
                   </select>
                 </div>
                 <button type="submit" className="w-full py-2 bg-indigo-900 text-white font-bold hover:bg-indigo-950 rounded uppercase shadow-3xs text-[10px] flex items-center justify-center gap-1">
@@ -1564,17 +1639,139 @@ export default function PanelWorkspace({
                       </div>
                       <p className="text-[10px] text-slate-400 mt-0.5 font-mono">Checked in: {v.checkin} | Phone: {v.phone}</p>
                     </div>
-                    <button onClick={() => {
-                      setVisitorQueue(visitorQueue.filter(q => q.token !== v.token));
-                      alert(`✅ Token ${v.token} processed & called to counter.`);
-                    }} className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[9px]">
-                      Call Next
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button 
+                        onClick={() => setActivePrintSlip(v)} 
+                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded text-[9px] flex items-center gap-1 font-bold"
+                        title="Reprint Thermal Slip"
+                      >
+                        <Printer className="w-3 h-3 text-slate-500" /> Print Slip
+                      </button>
+                      <button onClick={() => {
+                        setVisitorQueue(visitorQueue.filter(q => q.token !== v.token));
+                        alert(`✅ Token ${v.token} processed & called to counter.`);
+                      }} className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[9px]">
+                        Call Next
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
+
+          {/* ==================== THERMAL PRINT SLIP MODAL ==================== */}
+          {activePrintSlip && (
+            <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 animate-fade-in">
+              <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-sm w-full overflow-hidden text-xs font-sans">
+                {/* Modal Header */}
+                <div className="bg-indigo-950 text-white px-4 py-3 flex justify-between items-center">
+                  <span className="font-extrabold uppercase tracking-widest text-[10px] flex items-center gap-1.5">
+                    <Printer className="w-4 h-4 text-emerald-400 animate-pulse" /> Thermal Print Station
+                  </span>
+                  <button onClick={() => setActivePrintSlip(null)} className="text-slate-300 hover:text-white transition">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Simulated Thermal Receipt Roll */}
+                <div className="bg-amber-50/40 p-6 border-b border-dashed border-slate-200">
+                  <div className="bg-white border border-slate-200 p-5 shadow-inner rounded-md font-mono text-slate-800 text-[10.5px] space-y-3.5 relative overflow-hidden">
+                    {/* Decorative Receipt Jagged Edges */}
+                    <div className="absolute top-0 inset-x-0 h-1 bg-slate-100 border-b border-dashed border-slate-200"></div>
+
+                    <div className="text-center space-y-1 pt-1.5">
+                      <h4 className="font-extrabold text-[12px] tracking-tight uppercase text-slate-950">APEX SPECIALTY CLINICS</h4>
+                      <p className="text-[9px] text-slate-500">Opp. Ring Road, Sector-V, Delhi</p>
+                      <p className="text-[9px] text-slate-400 font-mono">PH: +91 98123-XXXXX</p>
+                      <div className="border-b border-dashed border-slate-300 my-1.5"></div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span>DATE & TIME:</span>
+                        <span className="font-bold text-slate-950">{new Date().toLocaleDateString()} {activePrintSlip.checkin}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>QUEUE TOKEN:</span>
+                        <span className="font-black text-indigo-700 text-[12px]">{activePrintSlip.token}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>CATEGORY:</span>
+                        <span className="font-bold text-emerald-800 uppercase text-[9.5px] bg-emerald-50 px-1 rounded">{activePrintSlip.type}</span>
+                      </div>
+                    </div>
+
+                    <div className="border-b border-dashed border-slate-300 my-2"></div>
+
+                    <div className="space-y-1 bg-slate-50 p-2 border rounded">
+                      <div className="flex justify-between text-[11px]">
+                        <span>PATIENT:</span>
+                        <span className="font-black text-slate-950 uppercase">{activePrintSlip.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>PHONE:</span>
+                        <span className="text-slate-600 font-bold">{activePrintSlip.phone}</span>
+                      </div>
+                      <div className="flex justify-between text-[8px] text-slate-400 mt-1 uppercase">
+                        <span>GATEWAY PROTOCOL:</span>
+                        <span>ABDM-FHIR-V4.0</span>
+                      </div>
+                    </div>
+
+                    <div className="border-b border-dashed border-slate-300 my-2"></div>
+
+                    {/* Simulated barcode */}
+                    <div className="text-center space-y-1 py-1">
+                      <div className="h-7 w-48 bg-slate-950 mx-auto flex items-stretch gap-[2px] px-2">
+                        <div className="bg-white w-[2px]"></div>
+                        <div className="bg-white w-[4px]"></div>
+                        <div className="bg-white w-[1px]"></div>
+                        <div className="bg-white w-[5px]"></div>
+                        <div className="bg-white w-[2px]"></div>
+                        <div className="bg-white w-[1px]"></div>
+                        <div className="bg-white w-[3px]"></div>
+                        <div className="bg-white w-[6px]"></div>
+                        <div className="bg-white w-[1px]"></div>
+                        <div className="bg-white w-[4px]"></div>
+                        <div className="bg-white w-[2px]"></div>
+                        <div className="bg-white w-[1px]"></div>
+                      </div>
+                      <p className="text-[9px] tracking-widest text-slate-400 font-mono">*{activePrintSlip.token}*</p>
+                    </div>
+
+                    <div className="text-center text-[9px] text-slate-400 space-y-0.5 border-t border-dashed border-slate-300 pt-2">
+                      <p className="font-bold text-slate-600">PLEASE WAIT IN WAITING AREA 3</p>
+                      <p>Your token will be announced digitally.</p>
+                      <p className="text-[8px] font-bold text-indigo-900 mt-1">✓ ABDM Verified Digital Patient Slip</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Print Control Actions */}
+                <div className="p-3 bg-slate-50 flex gap-2">
+                  <button 
+                    onClick={() => {
+                      alert("🖨️ Initializing thermal print job... Sending RAW spooler commands to USB Thermal receipt printer.");
+                      window.print();
+                    }} 
+                    className="flex-1 py-2 bg-indigo-900 hover:bg-indigo-950 text-white font-bold rounded uppercase tracking-wider text-[10px] flex items-center justify-center gap-1.5 shadow-xs"
+                  >
+                    <Printer className="w-3.5 h-3.5" /> Print via Browser
+                  </button>
+                  <button 
+                    onClick={() => {
+                      alert("✨ Simulated Thermal Spool successful! Thermal printhead activated. Ticket printed from virtual spooler.");
+                      setActivePrintSlip(null);
+                    }} 
+                    className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded uppercase tracking-wider text-[10px] flex items-center justify-center gap-1.5 shadow-xs"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Simulate Spool
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1936,52 +2133,806 @@ export default function PanelWorkspace({
       {/* ==================== 15. NURSING PANEL ==================== */}
       {(activePanel === 'Nursing Panel' || activePanel === 'Nursing') && (
         <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm space-y-4 animate-fade-in text-xs font-sans">
-          <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
-            <h3 className="font-extrabold text-indigo-950 uppercase tracking-wider text-sm flex items-center gap-1.5">
-              <ClipboardCheck className="w-5 h-5 text-indigo-700" /> Nursing Handover & Medication Administration Record (MAR)
-            </h3>
-            <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2.5 py-0.5 rounded">NABH Standard COP-2</span>
+          <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <h3 className="font-extrabold text-indigo-950 uppercase tracking-wider text-sm flex items-center gap-1.5">
+                <ClipboardCheck className="w-5 h-5 text-indigo-700" /> Digital Nursing Station & Clinical Handover Terminal
+              </h3>
+              <p className="text-[10px] text-slate-500 mt-0.5">Central ward management console for Medication Administration, ISBAR safety handoffs, and vital telemetry.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2.5 py-0.5 rounded">NABH Standard COP-2</span>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded">Active Ward: ICU & IPD Bed-A</span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-5 bg-slate-50 p-3.5 rounded border space-y-3">
-              <span className="font-bold text-slate-800 uppercase text-[10px] border-b pb-1 block">Nurse Shift Handover Checklist</span>
-              <div className="space-y-1.5 font-medium text-slate-700 text-[11px]">
-                <p className="flex items-center gap-1.5">✓ Narcotic Register Balance Tally Check Done</p>
-                <p className="flex items-center gap-1.5">✓ High-Alert Medications (ISMP list) verified & locked</p>
-                <p className="flex items-center gap-1.5">✓ Code Blue emergency kit checked & certified (Vial counts correct)</p>
-                <p className="flex items-center gap-1.5">✓ Critical telemetry values shared with incoming shifts</p>
-              </div>
-              <button onClick={() => alert("📝 Shift sign-off completed: Shift Nurse logged handover with digital stamp certificate.")} className="w-full py-1.5 bg-indigo-900 text-white font-bold rounded uppercase shadow-3xs hover:bg-indigo-950 transition">
-                Sign Shift Handover Certificate
-              </button>
-            </div>
+          {/* Sub-tab Navigation */}
+          <div className="flex border-b border-slate-200 gap-1 overflow-x-auto pb-px">
+            <button
+              onClick={() => setNursingTab('mar')}
+              className={`px-3.5 py-2 font-bold uppercase text-[10px] tracking-wider border-b-2 transition flex items-center gap-1.5 ${nursingTab === 'mar' ? 'border-indigo-700 text-indigo-950 bg-indigo-50/50' : 'border-transparent text-slate-400 hover:text-slate-700 hover:bg-slate-50'}`}
+            >
+              <Pill className="w-3.5 h-3.5" /> MAR & Medication Admin
+            </button>
+            <button
+              onClick={() => setNursingTab('isbar')}
+              className={`px-3.5 py-2 font-bold uppercase text-[10px] tracking-wider border-b-2 transition flex items-center gap-1.5 ${nursingTab === 'isbar' ? 'border-indigo-700 text-indigo-950 bg-indigo-50/50' : 'border-transparent text-slate-400 hover:text-slate-700 hover:bg-slate-50'}`}
+            >
+              <FileText className="w-3.5 h-3.5" /> ISBAR Handovers
+            </button>
+            <button
+              onClick={() => setNursingTab('vitals')}
+              className={`px-3.5 py-2 font-bold uppercase text-[10px] tracking-wider border-b-2 transition flex items-center gap-1.5 ${nursingTab === 'vitals' ? 'border-indigo-700 text-indigo-950 bg-indigo-50/50' : 'border-transparent text-slate-400 hover:text-slate-700 hover:bg-slate-50'}`}
+            >
+              <Activity className="w-3.5 h-3.5" /> Vital Signs Telemetry
+            </button>
+            <button
+              onClick={() => setNursingTab('care_checklist')}
+              className={`px-3.5 py-2 font-bold uppercase text-[10px] tracking-wider border-b-2 transition flex items-center gap-1.5 ${nursingTab === 'care_checklist' ? 'border-indigo-700 text-indigo-950 bg-indigo-50/50' : 'border-transparent text-slate-400 hover:text-slate-700 hover:bg-slate-50'}`}
+            >
+              <CheckSquare className="w-3.5 h-3.5" /> Shift Handover Safety Checklist
+            </button>
+          </div>
 
-            <div className="md:col-span-7 bg-slate-50 p-3.5 rounded border space-y-2">
-              <span className="font-bold text-slate-800 uppercase text-[10.5px] border-b pb-1.5 block">MAR (Medication Administration Record) Queue</span>
-              <div className="space-y-1.5 max-h-52 overflow-y-auto">
-                <div className="p-2.5 bg-white border rounded flex justify-between items-center shadow-3xs">
-                  <div>
-                    <span className="font-extrabold text-slate-800 text-[11px] block">Rahul Kumar</span>
-                    <span className="text-[10px] text-indigo-700 font-semibold block">Amlodipine 5mg - 1 Tablet QD</span>
-                    <span className="text-[9px] text-slate-400 font-mono">Scheduled: 10:00 AM | status: pending nurse stamp</span>
+          {/* Sub-tab Content Area */}
+          <div className="pt-2">
+
+            {/* TAB 1: MAR & MEDICATION ADMINISTRATION */}
+            {nursingTab === 'mar' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                {/* Add MAR Entry Form */}
+                <div className="lg:col-span-5 bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                  <span className="font-extrabold text-indigo-950 uppercase text-[10.5px] border-b border-slate-200 pb-1.5 block flex items-center gap-1">
+                    <Plus className="w-4 h-4 text-indigo-700" /> Prescribe / Schedule Drug for Ward MAR
+                  </span>
+                  <div className="space-y-2.5">
+                    <div>
+                      <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Select Admitted Patient</label>
+                      <select
+                        value={newMarPatient}
+                        onChange={e => setNewMarPatient(e.target.value)}
+                        className="w-full p-2 border rounded bg-white text-xs font-semibold"
+                      >
+                        {patients.map(p => (
+                          <option key={p.uhid} value={p.name}>{p.name} ({p.uhid})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Drug Generic / Brand Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Paracetamol 500mg, Meropenem 1g"
+                        value={newMarMed}
+                        onChange={e => setNewMarMed(e.target.value)}
+                        className="w-full p-2 border rounded bg-white text-xs"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Dosage & Route</label>
+                        <select
+                          value={newMarDosage}
+                          onChange={e => setNewMarDosage(e.target.value)}
+                          className="w-full p-2 border rounded bg-white text-xs"
+                        >
+                          <option value="1 Tablet QD (Oral)">1 Tablet QD (Oral)</option>
+                          <option value="1 Tablet BD (Oral)">1 Tablet BD (Oral)</option>
+                          <option value="1 Tablet TDS (Oral)">1 Tablet TDS (Oral)</option>
+                          <option value="10 Units SC (Subcutaneous)">10 Units SC (Subcutaneous)</option>
+                          <option value="Slow IV Infusion">Slow IV Infusion</option>
+                          <option value="500ml IV drip Q8H">500ml IV drip Q8H</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Scheduled Time</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 10:00 AM, Immediate"
+                          value={newMarTime}
+                          onChange={e => setNewMarTime(e.target.value)}
+                          className="w-full p-2 border rounded bg-white text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 p-1.5 bg-yellow-50 border border-yellow-200 rounded">
+                      <input
+                        type="checkbox"
+                        id="dualCheckInput"
+                        checked={newMarDualVerify}
+                        onChange={e => setNewMarDualVerify(e.target.checked)}
+                        className="w-4 h-4 accent-amber-600 rounded cursor-pointer"
+                      />
+                      <label htmlFor="dualCheckInput" className="text-[10px] text-amber-900 font-bold cursor-pointer select-none">
+                        ⚠️ Requires High-Alert Dual-Nurse Verification (ISMP Standard)
+                      </label>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        if (!newMarMed) {
+                          alert("Please specify the drug name first.");
+                          return;
+                        }
+                        const newId = `MAR-${Date.now().toString().slice(-4)}`;
+                        setMarQueue([
+                          ...marQueue,
+                          {
+                            id: newId,
+                            patient: newMarPatient,
+                            med: newMarMed,
+                            dosage: newMarDosage,
+                            time: newMarTime,
+                            status: newMarDualVerify ? 'Pending Dual-Signoff' : 'Pending',
+                            nurseSign: ''
+                          }
+                        ]);
+                        alert(`💊 Scheduled ${newMarMed} on MAR ledger for ${newMarPatient}.`);
+                        setNewMarMed('');
+                        setNewMarDualVerify(false);
+                      }}
+                      className="w-full py-2 bg-indigo-900 hover:bg-indigo-950 text-white font-bold rounded uppercase tracking-wider text-[10px]"
+                    >
+                      Schedule on Ward MAR Queue
+                    </button>
                   </div>
-                  <button onClick={() => alert("✓ Drug administered & stamped on Patient Medication Record.")} className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[9.5px]">
-                    Administer
-                  </button>
                 </div>
-                <div className="p-2.5 bg-white border rounded flex justify-between items-center shadow-3xs">
-                  <div>
-                    <span className="font-extrabold text-slate-800 text-[11px] block">Karan Singh</span>
-                    <span className="text-[10px] text-indigo-700 font-semibold block">Insulin Glargine - 10 Units SC</span>
-                    <span className="text-[9px] text-slate-400 font-mono">Scheduled: 01:00 PM | status: dual check required</span>
+
+                {/* MAR Queue Viewer */}
+                <div className="lg:col-span-7 bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-1.5">
+                    <span className="font-extrabold text-indigo-950 uppercase text-[10.5px]">
+                      Active Medication Administration Records (MAR) Queue
+                    </span>
+                    <span className="text-[10px] bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded font-mono">
+                      Queue Count: {marQueue.filter(m => m.status !== 'Administered').length}
+                    </span>
                   </div>
-                  <button onClick={() => alert("✓ Dual nurse sign-off certified. Insulin glargine administered.")} className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded text-[9.5px]">
-                    Dual-Verify & Give
+
+                  <div className="space-y-2 max-h-[290px] overflow-y-auto pr-1">
+                    {marQueue.map(item => (
+                      <div
+                        key={item.id}
+                        className={`p-3 bg-white border rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-3xs transition-all ${
+                          item.status === 'Administered'
+                            ? 'opacity-60 bg-slate-100 border-slate-200'
+                            : item.status === 'Pending Dual-Signoff'
+                            ? 'border-l-4 border-l-amber-500 border-slate-200'
+                            : 'border-l-4 border-l-indigo-600 border-slate-200'
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-slate-900 text-[11.5px]">{item.patient}</span>
+                            <span className="text-[9px] bg-slate-100 text-slate-500 font-mono px-1.5 py-0.2 rounded font-bold">{item.id}</span>
+                          </div>
+                          <p className="text-[11px] text-indigo-950 font-extrabold flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-700"></span> {item.med} — <span className="text-slate-600 font-medium">{item.dosage}</span>
+                          </p>
+                          <div className="flex items-center gap-3 text-[10px] text-slate-400 font-mono">
+                            <span>Scheduled: <strong>{item.time}</strong></span>
+                            {item.status === 'Administered' ? (
+                              <span className="text-emerald-700 font-bold uppercase flex items-center gap-0.5">
+                                <Check className="w-3.5 h-3.5 text-emerald-600 font-extrabold" /> Certified Administered by {item.nurseSign}
+                              </span>
+                            ) : item.status === 'Pending Dual-Signoff' ? (
+                              <span className="text-amber-700 font-bold uppercase bg-amber-50 px-1.5 py-0.2 rounded animate-pulse">
+                                ⚠️ Requires Dual Nurse Witness Stamp
+                              </span>
+                            ) : (
+                              <span className="text-slate-500 font-semibold uppercase">Pending Infusion</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {item.status !== 'Administered' && (
+                          <div className="flex gap-1.5 w-full sm:w-auto">
+                            {item.status === 'Pending Dual-Signoff' ? (
+                              <button
+                                onClick={() => {
+                                  const witness = prompt("🚨 HIGH-ALERT DOUBLE-CHECK PROTOCOL (ISMP COP-2.3)\nEnter witness Registered Nurse (RN) credentials code or full name to authorize:");
+                                  if (!witness) {
+                                    alert("❌ Witness stamp verification failed. High-alert drug cannot be administered without dual-signature verification.");
+                                    return;
+                                  }
+                                  setMarQueue(prev => prev.map(m => m.id === item.id ? { ...m, status: 'Administered', nurseSign: `Nurse Sunita (RN) & Witness: ${witness}` } : m));
+                                  alert(`✅ High-alert insulin dual witness verified successfully! Co-signed by RN ${witness}.`);
+                                }}
+                                className="w-full sm:w-auto px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded text-[10px] uppercase flex items-center justify-center gap-1 shadow-xs transition"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" /> Dual-Verify & Give
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setMarQueue(prev => prev.map(m => m.id === item.id ? { ...m, status: 'Administered', nurseSign: 'Nurse Sunita (RN)' } : m));
+                                  alert(`✓ Drug stamp logged: ${item.med} administered to ${item.patient}.`);
+                                }}
+                                className="w-full sm:w-auto px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded text-[10px] uppercase flex items-center justify-center gap-1 shadow-xs transition"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Administer
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setMarQueue(prev => prev.filter(m => m.id !== item.id));
+                              }}
+                              className="px-2 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded border border-red-200"
+                              title="Cancel / Delete MAR Schedule"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {marQueue.length === 0 && (
+                      <p className="text-center text-slate-400 py-6">No scheduled medication records found.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: ISBAR CLINICAL HANDOVERS */}
+            {nursingTab === 'isbar' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                {/* ISBAR Form */}
+                <div className="lg:col-span-5 bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                  <span className="font-extrabold text-indigo-950 uppercase text-[10.5px] border-b border-slate-200 pb-1.5 block flex items-center gap-1">
+                    <FileText className="w-4 h-4 text-indigo-700" /> Initiate Safe ISBAR Handover Record
+                  </span>
+                  <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                    <div>
+                      <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Patient Target</label>
+                      <select
+                        value={newIsbarPatient}
+                        onChange={e => setNewIsbarPatient(e.target.value)}
+                        className="w-full p-1.5 border rounded bg-white font-semibold text-xs"
+                      >
+                        {patients.map(p => (
+                          <option key={p.uhid} value={p.name}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">
+                        <strong>(I) Identify:</strong> Handover Nurses
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          placeholder="Outgoing RN Name"
+                          value={newIsbarFrom}
+                          onChange={e => setNewIsbarFrom(e.target.value)}
+                          className="w-full p-1.5 border rounded bg-white text-xs"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Incoming RN Name"
+                          value={newIsbarTo}
+                          onChange={e => setNewIsbarTo(e.target.value)}
+                          className="w-full p-1.5 border rounded bg-white text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">
+                        <strong>(S) Situation:</strong> Chief Complaint / Status
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="e.g. Patient post-op day 1 bypass, stable but blood pressure spiking."
+                        value={newIsbarSituation}
+                        onChange={e => setNewIsbarSituation(e.target.value)}
+                        className="w-full p-1.5 border rounded bg-white text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">
+                        <strong>(B) Background:</strong> Medical History / Admitting Diagnosis
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="e.g. History of chronic hypertension, diabetes. Triple bypass yesterday."
+                        value={newIsbarBackground}
+                        onChange={e => setNewIsbarBackground(e.target.value)}
+                        className="w-full p-1.5 border rounded bg-white text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">
+                        <strong>(A) Assessment:</strong> Current Vital Trends / Findings
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="e.g. BP 142/90, HR 82, SpO2 98% on 2L O2 cannula. Lungs clear."
+                        value={newIsbarAssessment}
+                        onChange={e => setNewIsbarAssessment(e.target.value)}
+                        className="w-full p-1.5 border rounded bg-white text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">
+                        <strong>(R) Recommendation:</strong> Explicit Plan / Critical Alerts
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="e.g. Check vital telemetry hourly. Adjust beta blocker. Keep urine chart."
+                        value={newIsbarRecommendation}
+                        onChange={e => setNewIsbarRecommendation(e.target.value)}
+                        className="w-full p-1.5 border rounded bg-white text-xs"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        if (!newIsbarSituation || !newIsbarRecommendation) {
+                          alert("Please fill out at least the Situation and Recommendation details to submit.");
+                          return;
+                        }
+                        const newId = `SBAR-${Date.now().toString().slice(-3)}`;
+                        setIsbarHandovers([
+                          {
+                            id: newId,
+                            patient: newIsbarPatient,
+                            situation: newIsbarSituation,
+                            background: newIsbarBackground,
+                            assessment: newIsbarAssessment,
+                            recommendation: newIsbarRecommendation,
+                            fromNurse: newIsbarFrom || 'Nurse Sunita',
+                            toNurse: newIsbarTo || 'Nurse Anil',
+                            timestamp: `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                          },
+                          ...isbarHandovers
+                        ]);
+                        alert(`📝 Handover registered. Safe clinical transfer initiated for ${newIsbarPatient}.`);
+                        setNewIsbarSituation('');
+                        setNewIsbarBackground('');
+                        setNewIsbarAssessment('');
+                        setNewIsbarRecommendation('');
+                      }}
+                      className="w-full py-2 bg-indigo-900 hover:bg-indigo-950 text-white font-bold rounded uppercase tracking-wider text-[10px] mt-2"
+                    >
+                      Log Handover & Validate SBAR
+                    </button>
+                  </div>
+                </div>
+
+                {/* SBAR Registry View */}
+                <div className="lg:col-span-7 bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-1.5">
+                    <span className="font-extrabold text-indigo-950 uppercase text-[10.5px]">
+                      WHO Clinical Shift Handovers Ledger (ISBAR Protocol)
+                    </span>
+                    <span className="text-[10px] bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded font-mono">
+                      Logs: {isbarHandovers.length}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5 max-h-[390px] overflow-y-auto pr-1">
+                    {isbarHandovers.map(sbar => (
+                      <div key={sbar.id} className="bg-white border rounded-lg p-3.5 shadow-3xs space-y-2">
+                        <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-dashed">
+                          <div>
+                            <span className="font-black text-slate-900 text-[12px] block">Patient: {sbar.patient}</span>
+                            <span className="text-[9.5px] text-slate-400 font-mono block">Log Ref: <strong>{sbar.id}</strong> | Signed: {sbar.timestamp}</span>
+                          </div>
+                          <div className="text-right text-[10px] text-indigo-950 font-bold">
+                            <p className="text-[8.5px] text-slate-400 uppercase tracking-widest">Handover Status</p>
+                            <span>{sbar.fromNurse} ➔ {sbar.toNurse}</span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10.5px] text-slate-700 font-medium">
+                          <div className="bg-rose-50/50 p-2 rounded border border-rose-100">
+                            <p className="font-bold text-rose-900 text-[9px] uppercase tracking-wider">⚠️ (S) Situation</p>
+                            <p className="mt-0.5 text-slate-800 leading-relaxed">{sbar.situation}</p>
+                          </div>
+                          <div className="bg-amber-50/50 p-2 rounded border border-amber-100">
+                            <p className="font-bold text-amber-900 text-[9px] uppercase tracking-wider">🗂️ (B) Background</p>
+                            <p className="mt-0.5 text-slate-800 leading-relaxed">{sbar.background || 'No historical background declared.'}</p>
+                          </div>
+                          <div className="bg-sky-50/50 p-2 rounded border border-sky-100">
+                            <p className="font-bold text-sky-900 text-[9px] uppercase tracking-wider">🩺 (A) Assessment</p>
+                            <p className="mt-0.5 text-slate-800 leading-relaxed">{sbar.assessment || 'No current clinical measurements captured.'}</p>
+                          </div>
+                          <div className="bg-emerald-50/50 p-2 rounded border border-emerald-100">
+                            <p className="font-bold text-emerald-900 text-[9px] uppercase tracking-wider">📋 (R) Recommendation</p>
+                            <p className="mt-0.5 text-slate-950 font-black leading-relaxed">{sbar.recommendation}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 border-t pt-2 mt-1.5">
+                          <button
+                            onClick={() => {
+                              alert(`🖨️ Spooling SBAR Handover Record for ${sbar.patient} (${sbar.id}) into clinical EMR chart.`);
+                              window.print();
+                            }}
+                            className="px-2.5 py-1 bg-white border rounded hover:bg-slate-50 text-slate-700 text-[9.5px] font-bold flex items-center gap-1"
+                          >
+                            <Printer className="w-3 h-3 text-slate-500" /> Print Summary
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsbarHandovers(prev => prev.filter(s => s.id !== sbar.id));
+                              alert("Removed handover record from current shift session cache.");
+                            }}
+                            className="px-2.5 py-1 bg-white border border-red-200 rounded hover:bg-red-50 text-red-600 text-[9.5px]"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: VITAL SIGNS TELEMETRY */}
+            {nursingTab === 'vitals' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                {/* Vitals Form */}
+                <div className="lg:col-span-5 bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                  <span className="font-extrabold text-indigo-950 uppercase text-[10.5px] border-b border-slate-200 pb-1.5 block flex items-center gap-1">
+                    <Activity className="w-4 h-4 text-indigo-700" /> Log Patient Vital Signs
+                  </span>
+                  <div className="space-y-2.5">
+                    <div>
+                      <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Patient</label>
+                      <select
+                        value={newVitalPatient}
+                        onChange={e => setNewVitalPatient(e.target.value)}
+                        className="w-full p-2 border rounded bg-white text-xs font-semibold"
+                      >
+                        {patients.map(p => (
+                          <option key={p.uhid} value={p.name}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Blood Pressure (mmHg)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 120/80"
+                          value={newVitalBP}
+                          onChange={e => setNewVitalBP(e.target.value)}
+                          className="w-full p-2 border rounded bg-white text-xs font-mono font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Heart Rate (bpm)</label>
+                        <input
+                          type="number"
+                          placeholder="e.g. 72"
+                          value={newVitalHR}
+                          onChange={e => setNewVitalHR(e.target.value)}
+                          className="w-full p-2 border rounded bg-white text-xs font-mono font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Temp (°F)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 98.4"
+                          value={newVitalTemp}
+                          onChange={e => setNewVitalTemp(e.target.value)}
+                          className="w-full p-2 border rounded bg-white text-xs font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">SpO2 (%)</label>
+                        <input
+                          type="number"
+                          placeholder="e.g. 98"
+                          value={newVitalSpO2}
+                          onChange={e => setNewVitalSpO2(e.target.value)}
+                          className="w-full p-2 border rounded bg-white text-xs font-mono font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-slate-500 font-bold mb-0.5 uppercase">Resp Rate (bpm)</label>
+                        <input
+                          type="number"
+                          placeholder="e.g. 16"
+                          value={newVitalResp}
+                          onChange={e => setNewVitalResp(e.target.value)}
+                          className="w-full p-2 border rounded bg-white text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const newId = `VIT-${Date.now().toString().slice(-3)}`;
+                        setVitalsLogs([
+                          {
+                            id: newId,
+                            patient: newVitalPatient,
+                            bp: newVitalBP,
+                            hr: parseInt(newVitalHR) || 72,
+                            temp: `${newVitalTemp}°F`,
+                            spo2: parseInt(newVitalSpO2) || 98,
+                            resp: parseInt(newVitalResp) || 16,
+                            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          },
+                          ...vitalsLogs
+                        ]);
+                        alert(`🩺 Registered new vital check on ${newVitalPatient}. Telemetry feeds updated.`);
+                      }}
+                      className="w-full py-2 bg-indigo-900 hover:bg-indigo-950 text-white font-bold rounded uppercase tracking-wider text-[10px]"
+                    >
+                      Save Vitals Log
+                    </button>
+                  </div>
+                </div>
+
+                {/* Vitals Telemetry Screen */}
+                <div className="lg:col-span-7 bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-1.5">
+                    <span className="font-extrabold text-indigo-950 uppercase text-[10.5px]">
+                      Ward Vital Signs Telemetry Ledger
+                    </span>
+                    <span className="text-[10px] bg-indigo-50 text-indigo-800 font-bold px-2 py-0.5 rounded font-mono">
+                      Integrated Live Feed
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                    {vitalsLogs.map(log => {
+                      // Determine warnings dynamically
+                      const isHighBP = parseInt(log.bp.split('/')[0]) > 140 || parseInt(log.bp.split('/')[1]) > 90;
+                      const isLowSpO2 = log.spo2 < 94;
+                      const isHighHR = log.hr > 100 || log.hr < 60;
+                      const hasAlert = isHighBP || isLowSpO2 || isHighHR;
+
+                      return (
+                        <div key={log.id} className={`p-3 bg-white border rounded-lg shadow-3xs space-y-2 relative transition-all ${hasAlert ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-emerald-500'}`}>
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="font-extrabold text-slate-800 text-[11.5px] block">{log.patient}</span>
+                              <span className="text-[9px] text-slate-400 font-mono">Ref: {log.id} | Logged: {log.timestamp}</span>
+                            </div>
+                            {hasAlert ? (
+                              <span className="px-2 py-0.5 bg-red-100 text-red-800 font-bold rounded text-[9px] uppercase animate-pulse flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 text-red-600" /> CDS Warning
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-[9px] uppercase">
+                                Normal Trend
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-5 gap-1.5 text-center">
+                            <div className="p-1 bg-slate-50 border rounded">
+                              <span className="text-[8px] text-slate-400 font-bold block uppercase">BP</span>
+                              <span className={`text-[11px] font-black font-mono block ${isHighBP ? 'text-red-700 font-extrabold' : 'text-slate-800'}`}>
+                                {log.bp}
+                              </span>
+                            </div>
+                            <div className="p-1 bg-slate-50 border rounded">
+                              <span className="text-[8px] text-slate-400 font-bold block uppercase">HR</span>
+                              <span className={`text-[11px] font-black font-mono block ${isHighHR ? 'text-red-700 font-extrabold' : 'text-slate-800'}`}>
+                                {log.hr} <span className="text-[7.5px] font-bold text-slate-400">bpm</span>
+                              </span>
+                            </div>
+                            <div className="p-1 bg-slate-50 border rounded">
+                              <span className="text-[8px] text-slate-400 font-bold block uppercase">TEMP</span>
+                              <span className="text-[11px] font-black font-mono text-slate-800 block">
+                                {log.temp}
+                              </span>
+                            </div>
+                            <div className="p-1 bg-slate-50 border rounded">
+                              <span className="text-[8px] text-slate-400 font-bold block uppercase">SpO2</span>
+                              <span className={`text-[11px] font-black font-mono block ${isLowSpO2 ? 'text-red-700 animate-pulse font-extrabold' : 'text-slate-800'}`}>
+                                {log.spo2}%
+                              </span>
+                            </div>
+                            <div className="p-1 bg-slate-50 border rounded">
+                              <span className="text-[8px] text-slate-400 font-bold block uppercase">RESP</span>
+                              <span className="text-[11px] font-black font-mono text-slate-800 block">
+                                {log.resp} <span className="text-[7.5px] font-bold text-slate-400">/m</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: SHIFT SAFETY CHECKLIST */}
+            {nursingTab === 'care_checklist' && (
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <div>
+                    <span className="font-extrabold text-indigo-950 uppercase text-[11px] block flex items-center gap-1">
+                      <ShieldCheck className="w-4 h-4 text-indigo-700" /> WHO & NABH Shift Handover Safety Audit Checklist
+                    </span>
+                    <p className="text-[9.5px] text-slate-400">Every outgoing shift coordinator must tick and stamp these checks before releasing ward control.</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[12px] font-black text-indigo-900 block">
+                      {Math.round((Object.values(safetyChecklist).filter(Boolean).length / Object.values(safetyChecklist).length) * 100)}%
+                    </span>
+                    <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Compliance Score</span>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-indigo-700 transition-all duration-300"
+                    style={{ width: `${(Object.values(safetyChecklist).filter(Boolean).length / Object.values(safetyChecklist).length) * 100}%` }}
+                  ></div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2 bg-white p-3 rounded border shadow-3xs">
+                    <span className="font-extrabold text-[9.5px] text-slate-400 uppercase tracking-wider block border-b pb-1">Primary Drug & Equipment Checks</span>
+                    
+                    <div className="flex items-start gap-2.5 p-1">
+                      <input 
+                        type="checkbox" 
+                        id="chk_narcotic" 
+                        checked={safetyChecklist.narcoticRegister} 
+                        onChange={e => setSafetyChecklist({ ...safetyChecklist, narcoticRegister: e.target.checked })} 
+                        className="w-4.5 h-4.5 accent-indigo-700 rounded mt-0.5 cursor-pointer"
+                      />
+                      <label htmlFor="chk_narcotic" className="cursor-pointer select-none">
+                        <span className="font-bold text-slate-800 block text-[11px]">Narcotic Register Balance Tally Check</span>
+                        <span className="text-[9.5px] text-slate-400 block">Double counts checked on morphine, fentanyl, and codeine ampoules.</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 p-1">
+                      <input 
+                        type="checkbox" 
+                        id="chk_highalert" 
+                        checked={safetyChecklist.highAlertMeds} 
+                        onChange={e => setSafetyChecklist({ ...safetyChecklist, highAlertMeds: e.target.checked })} 
+                        className="w-4.5 h-4.5 accent-indigo-700 rounded mt-0.5 cursor-pointer"
+                      />
+                      <label htmlFor="chk_highalert" className="cursor-pointer select-none">
+                        <span className="font-bold text-slate-800 block text-[11px]">High-Alert Medications Verification</span>
+                        <span className="text-[9.5px] text-slate-400 block">ISMP index high-alert infusions dual-verified and safely locked in pharmacy cart.</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 p-1">
+                      <input 
+                        type="checkbox" 
+                        id="chk_codeblue" 
+                        checked={safetyChecklist.codeBlueChecked} 
+                        onChange={e => setSafetyChecklist({ ...safetyChecklist, codeBlueChecked: e.target.checked })} 
+                        className="w-4.5 h-4.5 accent-indigo-700 rounded mt-0.5 cursor-pointer"
+                      />
+                      <label htmlFor="chk_codeblue" className="cursor-pointer select-none">
+                        <span className="font-bold text-slate-800 block text-[11px]">Code Blue Crash Cart Audit Done</span>
+                        <span className="text-[9.5px] text-slate-400 block">Defibrillator paddles tested. Laryngoscope battery and epinephrine count verified.</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 p-1">
+                      <input 
+                        type="checkbox" 
+                        id="chk_telemetry" 
+                        checked={safetyChecklist.criticalTelemetry} 
+                        onChange={e => setSafetyChecklist({ ...safetyChecklist, criticalTelemetry: e.target.checked })} 
+                        className="w-4.5 h-4.5 accent-indigo-700 rounded mt-0.5 cursor-pointer"
+                      />
+                      <label htmlFor="chk_telemetry" className="cursor-pointer select-none">
+                        <span className="font-bold text-slate-800 block text-[11px]">Telemetry Alarm Threshold Shared</span>
+                        <span className="text-[9.5px] text-slate-400 block">Incoming staff briefed on patients with critical blood-gases, pacing, or arrhythmias.</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 bg-white p-3 rounded border shadow-3xs">
+                    <span className="font-extrabold text-[9.5px] text-slate-400 uppercase tracking-wider block border-b pb-1">Direct Bedside & Catheter Care Checks</span>
+
+                    <div className="flex items-start gap-2.5 p-1">
+                      <input 
+                        type="checkbox" 
+                        id="chk_catheter" 
+                        checked={safetyChecklist.catheterCareDone} 
+                        onChange={e => setSafetyChecklist({ ...safetyChecklist, catheterCareDone: e.target.checked })} 
+                        className="w-4.5 h-4.5 accent-indigo-700 rounded mt-0.5 cursor-pointer"
+                      />
+                      <label htmlFor="chk_catheter" className="cursor-pointer select-none">
+                        <span className="font-bold text-slate-800 block text-[11px]">Central Line & Urinary Catheter Care</span>
+                        <span className="text-[9.5px] text-slate-400 block">Dressings dry and intact, bag levels verified against fluid balance logs.</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 p-1">
+                      <input 
+                        type="checkbox" 
+                        id="chk_cannula" 
+                        checked={safetyChecklist.cannulaSiteChecked} 
+                        onChange={e => setSafetyChecklist({ ...safetyChecklist, cannulaSiteChecked: e.target.checked })} 
+                        className="w-4.5 h-4.5 accent-indigo-700 rounded mt-0.5 cursor-pointer"
+                      />
+                      <label htmlFor="chk_cannula" className="cursor-pointer select-none">
+                        <span className="font-bold text-slate-800 block text-[11px]">Intravenous Cannula Site Checked</span>
+                        <span className="text-[9.5px] text-slate-400 block">Inspected sites for extravasation, pain, or redness (VIP phlebitis scale logged).</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 p-1">
+                      <input 
+                        type="checkbox" 
+                        id="chk_braden" 
+                        checked={safetyChecklist.bradenScoreLogged} 
+                        onChange={e => setSafetyChecklist({ ...safetyChecklist, bradenScoreLogged: e.target.checked })} 
+                        className="w-4.5 h-4.5 accent-indigo-700 rounded mt-0.5 cursor-pointer"
+                      />
+                      <label htmlFor="chk_braden" className="cursor-pointer select-none">
+                        <span className="font-bold text-slate-800 block text-[11px]">Braden Pressure Ulcer Assessment</span>
+                        <span className="text-[9.5px] text-slate-400 block">Braden scale score reassessed for bedridden high-risk skin integrity cases.</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 p-1">
+                      <input 
+                        type="checkbox" 
+                        id="chk_dvt" 
+                        checked={safetyChecklist.dvtProphylaxisGiven} 
+                        onChange={e => setSafetyChecklist({ ...safetyChecklist, dvtProphylaxisGiven: e.target.checked })} 
+                        className="w-4.5 h-4.5 accent-indigo-700 rounded mt-0.5 cursor-pointer"
+                      />
+                      <label htmlFor="chk_dvt" className="cursor-pointer select-none">
+                        <span className="font-bold text-slate-800 block text-[11px]">DVT Compression Stocking Check</span>
+                        <span className="text-[9.5px] text-slate-400 block">Dynamic pneumatic sleeves turned on and verified for deep vein prophylaxis.</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2 bg-white p-3 rounded border">
+                  <div>
+                    <span className="font-bold text-slate-800 block text-[11px]">Digitally Sign & Lock Handover Report</span>
+                    <span className="text-[10px] text-slate-400 block">Once locked, these checklist metrics lock onto the EMR database as unmodifiable audit proof.</span>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      const allChecked = Object.values(safetyChecklist).every(Boolean);
+                      if (!allChecked) {
+                        alert("⚠️ Compliance Alert: NABH guidelines require 100% checklist verification for shift releases. Please check the remaining clinical safety fields first.");
+                        return;
+                      }
+                      alert("🔒 Handover Certified! Registered under NABH Audit standard COP-2. Digital signature recorded for current nurse Shift Coordinator.");
+                    }} 
+                    className={`w-full sm:w-auto px-5 py-2 rounded text-[10.5px] font-extrabold uppercase transition tracking-wider ${
+                      Object.values(safetyChecklist).every(Boolean) 
+                        ? 'bg-indigo-900 text-white hover:bg-indigo-950 shadow-md animate-bounce' 
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    Lock & Sign Handover Certificate
                   </button>
                 </div>
               </div>
-            </div>
+            )}
+
           </div>
         </div>
       )}
@@ -2230,53 +3181,13 @@ export default function PanelWorkspace({
         </div>
       )}
 
-      {/* ==================== 20. AMBULANCE FLEET ==================== */}
-      {(activePanel === 'Ambulance Panel' || activePanel === 'Ambulance') && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm space-y-4 animate-fade-in text-xs font-sans">
-          <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
-            <h3 className="font-extrabold text-indigo-950 uppercase tracking-wider text-sm flex items-center gap-1.5">
-              <Truck className="w-5 h-5 text-indigo-700 animate-bounce" /> Emergency GPS Ambulance Dispatch Fleet Console
-            </h3>
-            <span className="text-[10px] bg-red-100 text-red-800 font-bold px-2.5 py-0.5 rounded">Emergency Link Active</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-slate-50 p-3.5 rounded border space-y-3">
-              <span className="font-bold text-slate-800 uppercase text-[10px] border-b pb-1.5 block">Active Ambulance Fleet List</span>
-              
-              <div className="p-3 bg-white border rounded flex justify-between items-center shadow-3xs">
-                <div>
-                  <span className="font-extrabold text-slate-800 text-[11px] block">Ambulance DL-3C-9011 (ALS Cardiac)</span>
-                  <p className="text-[10px] text-slate-400">Crew: EMT Sandeep | Location: South Delhi Ring Road</p>
-                </div>
-                <span className="px-2 py-0.5 bg-indigo-900 text-white font-extrabold rounded text-[9px] uppercase animate-pulse">Dispatched</span>
-              </div>
-
-              <div className="p-3 bg-white border rounded flex justify-between items-center shadow-3xs">
-                <div>
-                  <span className="font-extrabold text-slate-800 text-[11px] block">Ambulance DL-3C-1200 (BLS Unit)</span>
-                  <p className="text-[10px] text-slate-400">Crew: EMT Rajeev | Location: Main Campus Standby</p>
-                </div>
-                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-[9px] uppercase">Standby</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-3.5 rounded border flex flex-col justify-between h-44 text-center space-y-2">
-              <div className="w-10 h-10 bg-indigo-100 border rounded-full flex items-center justify-center mx-auto text-indigo-800">
-                <Truck className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-800 uppercase text-[10.5px]">GPS Trauma Dispatch Controller</h4>
-                <p className="text-[10.5px] text-slate-500 max-w-sm mx-auto leading-relaxed mt-1">
-                  Click dispatch below to immediately deploy the standby BLS unit to incoming emergency accident telemetry coordinates.
-                </p>
-              </div>
-              <button onClick={() => alert("🚨 AMBULANCE DL-3C-1200 DISPATCHED! Sirens active, EMT route instructions sent to mobile tablet.")} className="w-full py-2 bg-red-700 hover:bg-red-800 text-white font-bold rounded uppercase text-[10px]">
-                Deploy Standby Ambulance Unit
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* ==================== 20. ALLIED OPERATIONAL PANELS ==================== */}
+      {['Infection Control Team', 'Dietician Panel', 'Physiotherapy Panel', 'CSSD Panel', 'Housekeeping Panel', 'Biomedical Waste', 'Ambulance Panel', 'Ambulance', 'Purchase Panel', 'Inventory Panel', 'Maintenance Panel'].includes(activePanel) && (
+        <AlliedOperationalPanels
+          activePanel={activePanel}
+          patients={patients}
+          onUpdatePatient={onUpdatePatient}
+        />
       )}
 
       {/* ==================== 21. HR DEPARTMENT PANEL ==================== */}
@@ -2607,7 +3518,7 @@ export default function PanelWorkspace({
       )}
 
       {/* ==================== 25. STANDARD SUPPORT FOR REMAINING MODULES (CSSD, HOUSEKEEPING, BIOMEDICAL WASTE, ETC.) ==================== */}
-      {!['Super Admin Panel', 'NABH Compliance Panel', 'Analytics Dashboard', 'Corporate Admin Panel', 'Hospital Admin Panel', 'Medical Superintendent', 'Medical Director Panel', 'Quality Manager (NABH)', 'SOP / Policies', 'Emergency Panel', 'Pharmacy Panel', 'Pharmacy', 'Laboratory Panel', 'Doctor Portal Panel', 'Patient Portal Panel', 'Reception', 'Reception Panel', 'OPD Panel', 'OPD', 'IPD Panel', 'IPD', 'ICU Panel', 'ICU', 'OT Panel', 'OT', 'Nursing Panel', 'Nursing', 'MRD Panel', 'MRD', 'Radiology Panel', 'Radiology', 'Blood Centre Panel', 'Blood Centre', 'Biomedical Engineering', 'Ambulance Panel', 'Ambulance', 'HR Department', 'Finance & Accounts', 'Mobile App Panel', 'Mobile App', 'ABDM Integration Panel', 'ABDM Integration'].includes(activePanel) && (
+      {!['Super Admin Panel', 'NABH Compliance Panel', 'Analytics Dashboard', 'Corporate Admin Panel', 'Hospital Admin Panel', 'Medical Superintendent', 'Medical Director Panel', 'Quality Manager (NABH)', 'SOP / Policies', 'Emergency Panel', 'Pharmacy Panel', 'Pharmacy', 'Laboratory Panel', 'Doctor Portal Panel', 'Patient Portal Panel', 'Reception', 'Reception Panel', 'OPD Panel', 'OPD', 'IPD Panel', 'IPD', 'ICU Panel', 'ICU', 'OT Panel', 'OT', 'Nursing Panel', 'Nursing', 'MRD Panel', 'MRD', 'Radiology Panel', 'Radiology', 'Blood Centre Panel', 'Blood Centre', 'Biomedical Engineering', 'Ambulance Panel', 'Ambulance', 'HR Department', 'Finance & Accounts', 'Mobile App Panel', 'Mobile App', 'ABDM Integration Panel', 'ABDM Integration', 'Infection Control Team', 'Dietician Panel', 'Physiotherapy Panel', 'CSSD Panel', 'Housekeeping Panel', 'Biomedical Waste', 'Purchase Panel', 'Inventory Panel', 'Maintenance Panel'].includes(activePanel) && (
         <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm text-xs font-sans space-y-4 animate-fade-in">
           <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
             <h3 className="font-extrabold text-indigo-950 uppercase tracking-wider text-sm flex items-center gap-1.5">

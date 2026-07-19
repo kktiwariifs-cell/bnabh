@@ -76,7 +76,7 @@ export default function App() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showQuickHelp, setShowQuickHelp] = useState(true);
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState<boolean>(false);
-  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState<boolean>(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState<boolean>(true);
   const [favoritePanels, setFavoritePanels] = useState<string[]>([
     "NABH Compliance Panel", "OPD Panel", "ICU Panel", "Emergency Panel", "Pharmacy Panel", "ABDM Integration Panel"
   ]);
