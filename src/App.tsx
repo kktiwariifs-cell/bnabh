@@ -673,6 +673,7 @@ export default function App() {
             onTriggerAiCapa={handleTriggerAiCapa}
             aiGeneratingId={aiGeneratingId}
             currentUser={currentUser}
+            onSetActivePanel={setActivePanel}
           />
         </section>
 

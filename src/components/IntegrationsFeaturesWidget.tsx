@@ -2,24 +2,31 @@ import React, { useState } from 'react';
 import { INTEGRATIONS, KEY_FEATURES, TECH_STACK } from '../data/initialData';
 import { 
   Database, Network, Heart, DollarSign, ShieldCheck, MessageSquare, Cpu, Globe,
-  ArrowRight, Sparkles, Terminal, X, HelpCircle, Activity, Landmark, Workflow
+  ArrowRight, Sparkles, Terminal, X, HelpCircle, Activity, Landmark, Workflow, CheckCircle2
 } from 'lucide-react';
 
-export default function IntegrationsFeaturesWidget() {
-  const [selectedTechDetail, setSelectedTechDetail] = useState<{ title: string; desc: string } | null>(null);
+interface IntegrationsFeaturesWidgetProps {
+  onSetActivePanel?: (panel: string) => void;
+}
+
+export default function IntegrationsFeaturesWidget({ onSetActivePanel }: IntegrationsFeaturesWidgetProps) {
+  const [selectedTechDetail, setSelectedTechDetail] = useState<{ title: string; desc: string; targetPanel?: string } | null>(null);
 
   // Workflow steps corresponding to standard ABDM/NABH loops
   const workflowSteps = [
-    { id: 1, label: "Patient Registration", sub: "ABHA Card Creation", detail: "Patient registers using their Aadhaar/Mobile number, generates an ABHA card, and links their internal hospital UHID." },
-    { id: 2, label: "OPD/IPD Consultation", sub: "Doctor Clinical Vitals", detail: "The doctor reviews historical PHR data, captures vitals, logs signs, and structures clinical diagnoses." },
-    { id: 3, label: "Investigation", sub: "LIS / RIS Analyzers", detail: "Diagnostic orders are sent to laboratory or radiology systems electronically. Results are auto-saved on EHR." },
-    { id: 4, label: "Treatment", sub: "Nursing Care Cards", detail: "Nurses administer drugs, capture continuous ward data, and log daily observations under active alarm surveillance." },
-    { id: 5, label: "e-Prescription", sub: "Digital Signing", detail: "Doctor enters medications and digitally signs the prescription with unique compliance keys." },
-    { id: 6, label: "Discharge & Billing", sub: "TPA & PHR Sync", detail: "Items are compiled, corporative claims processed, and the discharge report is pushed securely to the national PHR gateway." }
+    { id: 1, label: "Patient Registration", sub: "ABHA Card Creation", targetPanel: "Reception", detail: "Patient registers using their Aadhaar/Mobile number, generates an ABHA card, and links their internal hospital UHID. Click to open the active Reception Panel to register new patients and link ABHA profiles." },
+    { id: 2, label: "OPD/IPD Consultation", sub: "Doctor Clinical Vitals", targetPanel: "OPD Panel", detail: "The doctor reviews historical PHR data, captures vitals, logs signs, and structures clinical diagnoses. Click to open the active OPD Consultation board to log vitals and dispatch diagnostics." },
+    { id: 3, label: "Investigation", sub: "LIS / RIS Analyzers", targetPanel: "Laboratory Panel", detail: "Diagnostic orders are sent to laboratory or radiology systems electronically. Results are auto-saved on EHR. Click to open the Laboratory dispatch console to view/process diagnostic logs." },
+    { id: 4, label: "Treatment", sub: "Nursing Care Cards", targetPanel: "Nursing Panel", detail: "Nurses administer drugs, capture continuous ward data, and log daily observations under active alarm surveillance. Click to open the active Nursing Panel to view nursing care schedules." },
+    { id: 5, label: "e-Prescription", sub: "Digital Signing", targetPanel: "Doctor Portal Panel", detail: "Doctor enters medications and digitally signs the prescription with unique compliance keys. Click to open the Doctor Portal Panel to view clinical records and authorize prescriptions." },
+    { id: 6, label: "Discharge & Billing", sub: "TPA & PHR Sync", targetPanel: "Finance & Accounts", detail: "Items are compiled, corporative claims processed, and the discharge report is pushed securely to the national PHR gateway. Click to open Finance & Accounts to review bill items, process billing records, and close ADT folders." }
   ];
 
-  const handleTechClick = (title: string, desc: string) => {
-    setSelectedTechDetail({ title, desc });
+  const handleTechClick = (title: string, desc: string, targetPanel?: string) => {
+    setSelectedTechDetail({ title, desc, targetPanel });
+    if (targetPanel && onSetActivePanel) {
+      onSetActivePanel(targetPanel);
+    }
   };
 
   const getIntegrationIcon = (name: string) => {
@@ -95,8 +102,8 @@ export default function IntegrationsFeaturesWidget() {
           {workflowSteps.map((step, idx) => (
             <button
               key={step.id}
-              onClick={() => handleTechClick(step.label, step.detail)}
-              className="p-2 border border-slate-100 bg-slate-50 hover:bg-indigo-50/30 hover:border-indigo-300 rounded-lg text-left transition flex flex-col justify-between relative group"
+              onClick={() => handleTechClick(step.label, step.detail, step.targetPanel)}
+              className="p-2 border border-slate-100 bg-slate-50 hover:bg-indigo-50/30 hover:border-indigo-300 rounded-lg text-left transition flex flex-col justify-between relative group cursor-pointer"
             >
               <div>
                 <div className="flex justify-between items-center mb-0.5">
@@ -155,6 +162,13 @@ export default function IntegrationsFeaturesWidget() {
               <h4 className="font-bold text-slate-800 text-sm">{selectedTechDetail.title}</h4>
               <p className="text-slate-600 leading-relaxed text-[11px]">{selectedTechDetail.desc}</p>
               
+              {selectedTechDetail.targetPanel && (
+                <div className="bg-emerald-50 border border-emerald-200 text-[#006437] p-2 rounded text-[10px] font-bold flex items-center gap-1.5 animate-pulse">
+                  <CheckCircle2 className="w-4 h-4 text-[#70C143]" />
+                  <span>✓ Operational Workspace Switched & Activated: {selectedTechDetail.targetPanel}</span>
+                </div>
+              )}
+
               <div className="bg-slate-50 border border-slate-100 p-2 rounded text-[10px] text-slate-500 font-mono leading-relaxed">
                 <strong>ABDM Compliant Protocol:</strong><br />
                 - JSON schema structured payloads<br />

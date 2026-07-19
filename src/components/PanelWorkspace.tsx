@@ -40,6 +40,7 @@ interface PanelWorkspaceProps {
   onTriggerAiCapa: (incident: Incident) => void;
   aiGeneratingId: string | null;
   currentUser?: HmsUser | null;
+  onSetActivePanel?: (panel: string) => void;
 }
 
 export default function PanelWorkspace({
@@ -62,6 +63,7 @@ export default function PanelWorkspace({
   onTriggerAiCapa,
   aiGeneratingId,
   currentUser,
+  onSetActivePanel,
 }: PanelWorkspaceProps) {
 
   // Patient Dossier modal state
@@ -642,10 +644,10 @@ export default function PanelWorkspace({
           />
 
           {/* Row 5: Bottom row integrations */}
-          <IntegrationsFeaturesWidget />
+          <IntegrationsFeaturesWidget onSetActivePanel={onSetActivePanel} />
 
           {/* Row 6: Footer */}
-          <FooterWidget />
+          <FooterWidget onSetActivePanel={onSetActivePanel} />
         </div>
       )}
 
